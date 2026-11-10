@@ -1,5 +1,5 @@
 # 这个补丁被 dsh.bundle.patch 引用，按顺序插入 / 覆盖 Loader 条目。
 # 规则：insert 新增一行；override 按 id 覆盖已存在的行。
 - insert:
-    - id: dsh-plugin-hello
-      name: '@local/dsh-plugin-hello'
+    - id: dsh-self-taught
+      name: '@local/dsh-self-taught'

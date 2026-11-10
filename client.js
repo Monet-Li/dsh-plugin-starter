@@ -1,6 +1,6 @@
 // 浏览器半边：注册到 window.__ModuleLoader__，factory 的 id 必须等于 package.json 的 name。
 window.__ModuleLoader__.load({
-  id: '@local/dsh-plugin-hello',
+  id: '@local/dsh-self-taught',
   factory(require) {
     const React = require('react');
     const h = React.createElement;
@@ -32,7 +32,7 @@ window.__ModuleLoader__.load({
       apply(ctx) {
         ctx.slots.inject('conversation.composer.dock', () =>
           ctx.slots.register(
-            { name: 'conversation.composer.dock', id: 'dsh-plugin-hello', order: 5 },
+            { name: 'conversation.composer.dock', id: 'dsh-self-taught', order: 5 },
             Hello,
           ),
         );
