@@ -1,0 +1,25 @@
+# 可选：打 tag 时自动发 npm。用之前先做两件事：
+#   1) package.json 里 "private": false，并把 name 换成你自己的 npm scope
+#   2) 在仓库 Settings → Secrets 里加 NPM_TOKEN（npmjs.com 的 Automation token）
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
