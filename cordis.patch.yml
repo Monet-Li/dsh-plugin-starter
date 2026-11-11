@@ -2,4 +2,4 @@
 # 规则：insert 新增一行；override 按 id 覆盖已存在的行。
 - insert:
     - id: dsh-self-taught
-      name: '@local/dsh-self-taught'
+      name: 'dsh-self-taught'

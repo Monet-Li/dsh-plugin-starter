@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Hello Dock",
-    "description": "Shows a small greeting line in the composer dock."
+    "title": "Self-Taught",
+    "description": "Samples the web before answering subjective questions and turns your choices into upgradable preferences (local SQLite)."
   }
 }

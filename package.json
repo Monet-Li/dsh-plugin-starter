@@ -1,28 +1,41 @@
 {
-  "name": "@local/dsh-self-taught",
+  "name": "dsh-self-taught",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "description": "DeepSeek Harness 插件模板：在 Web UI 输入框下方显示一行问候",
+  "description": "让 dsh 处理主观问题时先采样再回答，并把你的选择沉淀成可升级的偏好。",
+  "main": "index.js",
   "exports": {
     ".": "./index.js",
-    "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
   "files": [
     "index.js",
-    "client.js",
-    "cordis.patch.yml",
+    "lib/",
+    "scripts/",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
   ],
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "keywords": ["dsh", "dsh-plugin", "preference", "subjective", "sqlite"],
+  "author": "Monet-Li",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Monet-Li/dsh-self-taught.git"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": {
-      "platform": "web",
-      "immediately": true,
-      "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   }
 }
