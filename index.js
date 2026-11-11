@@ -68,6 +68,20 @@ export function apply(ctx, input) {
     if (typeof web?.search !== 'function') throw new Error('web.search 不可用')
     return web.search(request, signal)
   }
+  // 搜索结果不带日期，靠 fetch 自己补：抓不到日期时判级会落到 weak，不影响可用性
+  const fetchOne = async (request, signal) => {
+    const web = readService(ctx, 'web')
+    if (typeof web?.fetch !== 'function') throw new Error('web.fetch 不可用')
+    return web.fetch(request, signal)
+  }
+  const hasFetch = (() => {
+    try {
+      return typeof readService(ctx, 'web')?.fetch === 'function'
+    } catch {
+      return false
+    }
+  })()
+  if (!hasFetch) log('info', '没有 web.fetch，采样结果不补发布日期（strong 档不可达）')
   const hasSearch = (() => {
     try {
       return typeof readService(ctx, 'web')?.search === 'function'
@@ -78,7 +92,12 @@ export function apply(ctx, input) {
   if (!hasSearch) log('info', '没有 web.search，采样会退化为「缺乏共识」')
 
   if (ctx?.tools?.register) {
-    for (const definition of buildTools({ store, search: hasSearch ? search : undefined, cfg })) {
+    for (const definition of buildTools({
+      store,
+      search: hasSearch ? search : undefined,
+      fetch: hasFetch ? fetchOne : undefined,
+      cfg,
+    })) {
       try {
         keep(ctx.tools.register(definition))
       } catch (error) {

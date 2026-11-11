@@ -62,6 +62,9 @@ npx dsh plugin add dsh-self-taught
 | `dbPath` | `<DSH_HOME>/plugin-data/dsh-self-taught/prefs.db` | 换成带盘的路径可以跨机器同步 |
 | `maxDirections` | `3` | 最多给几个方向 |
 | `sampleMaxResults` | `10` | 每次查询取几条 |
+| `dateProbe` | `true` | 搜索结果不带发布时间时，自己抓页面补 `publishedAt`（`strong` 档依赖它） |
+| `dateProbeMax` | `6` | 每次采样最多补几条页面的日期；`0` 等于关闭 |
+| `dateProbeTimeoutMs` | `4000` | 单条页面抓取超时 |
 | `staleDays` | `90` | 多久不看就算陈旧，降一级 |
 | `exceptionWindowDays` | `30` | 这么多天内有反例 → 标"可例外" |
 
@@ -88,7 +91,7 @@ node --test --test-isolation=none tests/   # 47 个用例
 node scripts/smoke.mjs                     # 用假 ctx 跑一遍 apply()，不碰真 profile
 ```
 
-测试覆盖：分类判定、升级/降级状态机、采样统计与三档判级、采样失败兜底、方向来源校验、提示词自检、工具注册形状。
+测试覆盖：分类判定、升级/降级状态机、采样统计与三档判级、采样失败兜底、发布日期回采（meta/JSON-LD/time 三种来源 + 无日期/非法日期/未来年份/更新时间四个负例 + 超时与 404）、方向来源校验、提示词自检、工具注册形状。
 
 > `--test-isolation=none` 是为了在受限沙箱里跑（默认每个文件起子进程，会被拦）。老版本 Node 不认这个 flag 时，直接 `node tests/xxx.test.js` 逐文件跑。
 
@@ -109,7 +112,8 @@ lib/tools.js          三个工具的完整定义
 ## 已知限制
 
 - **分类不是精确的。** 规则层只看关键词，最终靠主模型按提示词裁定；宁可漏触发，也不要干扰客观问题。代码里有客观否决词优先的逻辑（带代码块一律判客观）。
-- **"限定时效"是弱保证。** `web.search` 的请求只支持 `query` 和 `maxResults`，没有时间过滤参数；时效只能靠查询词 + 返回结果的 `publishedAt` 事后统计（`datedShare`）。
+- **"限定时效"是弱保证。** `web.search` 的请求只支持 `query` 和 `maxResults`，没有时间过滤参数；时效只能靠查询词 + 结果里的 `publishedAt` 事后统计（`datedShare`）。
+- **主流 provider 都不返回发布时间。** `deepseek-official` 与 `web-search-free` 的搜索结果只有 `{url,title,snippet}`（后者源码里根本没有 `publishedAt` 字段）。而 `strong` 档要求 `datedShare >= 0.5`，所以插件自己补：`dateProbe` 对前 N 条页面抓一次 HTML，从 `article:published_time` / JSON-LD `datePublished` / `<time datetime>` 抽真实日期。代价是每次采样多 5~8 个请求（约 1~3 秒）；抽不到就留空，判级如实落到 `weak`，并在工具返回里加一条"时效禁令"禁止说"近期/最新"。刻意**不认** `article:modified_time`——更新时间不是发布时间。
 - **采样质量取决于搜索源。** 中文长尾话题容易只搜到单一站点，这时会被判成 `none` 而不是硬凑共识。宿主 profile 的 `web` provider 若未配置/不可用，`pref_sample` 会返回 `reason=provider_unavailable` 并把原始错误带在 `error` 里（内置 `web_search` 此时也会一起失败，属于环境问题不是插件问题）。
 - **群组偏好没有做。** 现在是"你自己的偏好"，没有多人聚合。
 
