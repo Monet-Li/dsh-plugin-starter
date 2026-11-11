@@ -110,8 +110,14 @@ lib/tools.js          三个工具的完整定义
 
 - **分类不是精确的。** 规则层只看关键词，最终靠主模型按提示词裁定；宁可漏触发，也不要干扰客观问题。代码里有客观否决词优先的逻辑（带代码块一律判客观）。
 - **"限定时效"是弱保证。** `web.search` 的请求只支持 `query` 和 `maxResults`，没有时间过滤参数；时效只能靠查询词 + 返回结果的 `publishedAt` 事后统计（`datedShare`）。
-- **采样质量取决于搜索源。** 中文长尾话题容易只搜到单一站点，这时会被判成 `none` 而不是硬凑共识。
+- **采样质量取决于搜索源。** 中文长尾话题容易只搜到单一站点，这时会被判成 `none` 而不是硬凑共识。宿主 profile 的 `web` provider 若未配置/不可用，`pref_sample` 会返回 `reason=provider_unavailable` 并把原始错误带在 `error` 里（内置 `web_search` 此时也会一起失败，属于环境问题不是插件问题）。
 - **群组偏好没有做。** 现在是"你自己的偏好"，没有多人聚合。
+
+## 三个踩过的坑（写在这里省得下次再踩）
+
+1. **`export const inject` 只认数组。** 不声明就访问 `ctx.systemPrompt` 会抛 `cannot get property "systemPrompt" without inject`，整条插件 `failed`；写成 `{ required: [...], optional: [...] }` 会被当成两个叫 `required`/`optional` 的服务，条目永远 `pending (waiting for services: required, optional)`。可选服务用 `ctx.reflect.get('web')` 惰性读，**不要**写进 `inject`，否则缺一个就整条 pending。
+2. **测试要加 `--test-isolation=none`。** 默认每个测试文件起子进程，在沙箱里会被拦（`spawn EPERM`）。
+3. **改完 `lib/*.js` 要重新 enable 一次插件。** 热更新只覆盖入口模块，不会带上 `lib/` 里的闭包；`plugin_manager` 先 `enabled:false` 再 `enabled:true` 才会用新代码。
 
 ## 发布到 GitHub
 
