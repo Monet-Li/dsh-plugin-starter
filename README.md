@@ -25,7 +25,7 @@
 | `pref_sample` | 联网采样：构造查询 → 搜索 → 去重 → 域名统计 → 判级 `strong/weak/none` |
 | `pref_record` | 记录你的选择（含理由与情境），由代码计算等级并写库 |
 
-外加一段常驻系统提示，规定"主观 / 客观"的分流规则和呈现格式。
+外加一段**极简常驻系统提示**（≈170 字符，只讲触发条件与调用顺序）；完整流程不常驻，由 `pref_lookup` / `pref_sample` 的返回按需带出，所以客观问题不用白付这段 token。
 
 ## 三个设计原则
 
@@ -101,7 +101,7 @@ lib/classify.js       规则召回：主观/客观、类型、情境标签（纯
 lib/escalate.js       升级/降级状态机 + lookup（纯函数）
 lib/store.js          SQLite 读写（node:sqlite）
 lib/sample.js         查询构造 / 去重 / 统计 / 判级 / 方向校验（注入 search，可离线测）
-lib/prompts.js        常驻提示段 + 人气断言自检
+lib/prompts.js        极简常驻段 + 按需展开的完整流程 + 人气断言自检
 lib/confidence.js     置信度公式
 lib/tools.js          三个工具的完整定义
 ```

@@ -6,6 +6,23 @@ import { SYSTEM_SECTION } from './lib/prompts.js'
 export const name = 'dsh-self-taught'
 
 /**
+ * Cordis 服务依赖声明（数组形式，本版本只认数组；对象形式会被当成两个叫 required/optional 的服务）。
+ * 只声明真正必需的：没有它们插件没有意义。web / logger 用 ctx.reflect.get 读，
+ * 不写进 inject —— 否则缺一个就会让这个条目永远 pending。
+ */
+export const inject = ['systemPrompt', 'tools']
+
+/** 不声明 inject 也能安全读服务：拿不到就是 undefined，不抛。 */
+function readService(ctx, name) {
+  try {
+    if (typeof ctx?.reflect?.get === 'function') return ctx.reflect.get(name)
+  } catch {
+    /* ignore */
+  }
+  return undefined
+}
+
+/**
  * Cordis 插件入口。所有服务都用可选链访问：缺哪个就不注册对应的能力，
  * 不要因为一个可选服务缺失导致整个 profile 起不来。
  */
@@ -13,9 +30,10 @@ export function apply(ctx, input) {
   const cfg = normalizeConfig(input)
   if (cfg.mode === 'off') return
 
+  const logger = readService(ctx, 'logger')
   const log = (level, msg, extra) => {
-    const fn = ctx?.logger?.[level]
-    if (typeof fn === 'function') fn.call(ctx.logger, `[dsh-self-taught] ${msg}`, extra ?? '')
+    const fn = logger?.[level]
+    if (typeof fn === 'function') fn.call(logger, `[dsh-self-taught] ${msg}`, extra ?? '')
   }
 
   const dbPath = resolveDbPath(cfg)
@@ -44,14 +62,23 @@ export function apply(ctx, input) {
     log('warn', '没有 systemPrompt 服务，主观问题流程不会生效')
   }
 
-  const search =
-    typeof ctx?.web?.search === 'function'
-      ? (request, signal) => ctx.web.search(request, signal)
-      : undefined
-  if (!search) log('info', '没有 web.search，采样会退化为「缺乏共识」')
+  // web 不写进 inject：这里惰性读取，缺了就让采样退化为「缺乏共识」，而不是让整个条目 pending
+  const search = async (request, signal) => {
+    const web = readService(ctx, 'web')
+    if (typeof web?.search !== 'function') throw new Error('web.search 不可用')
+    return web.search(request, signal)
+  }
+  const hasSearch = (() => {
+    try {
+      return typeof readService(ctx, 'web')?.search === 'function'
+    } catch {
+      return false
+    }
+  })()
+  if (!hasSearch) log('info', '没有 web.search，采样会退化为「缺乏共识」')
 
   if (ctx?.tools?.register) {
-    for (const definition of buildTools({ store, search, cfg })) {
+    for (const definition of buildTools({ store, search: hasSearch ? search : undefined, cfg })) {
       try {
         keep(ctx.tools.register(definition))
       } catch (error) {

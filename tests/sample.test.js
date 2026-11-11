@@ -88,6 +88,25 @@ test('没有搜索能力 → provider_unavailable', async () => {
   assert.equal(r.reason, 'provider_unavailable')
 })
 
+test('provider 已注册但不可用 → provider_unavailable，且保留原始错误', async () => {
+  const search = async () => {
+    throw new Error('configured web provider "web-search-free" is registered but unavailable')
+  }
+  const r = await samplePreference({ search, question: '帮我选配色' })
+  assert.equal(r.strength, 'none')
+  assert.equal(r.reason, 'provider_unavailable')
+  assert.match(r.error, /registered but unavailable/)
+})
+
+test('多 provider 歧义 → provider_ambiguous', async () => {
+  const search = async () => {
+    throw new Error('WEB_PROVIDER_AMBIGUOUS: multiple usable providers')
+  }
+  const r = await samplePreference({ search, question: '帮我选配色' })
+  assert.equal(r.strength, 'none')
+  assert.equal(r.reason, 'provider_ambiguous')
+})
+
 test('搜到 0 条 → no_results', async () => {
   const r = await samplePreference({ search: async () => ({ sources: [] }), question: '帮我选配色' })
   assert.equal(r.strength, 'none')

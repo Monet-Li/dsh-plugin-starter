@@ -8,3 +8,5 @@ Thumbs.db
 # 沙箱遗留的 pip 临时目录 / 虚拟环境（不可读，勿提交）
 pip-*/
 .venv/
+
+*.patch

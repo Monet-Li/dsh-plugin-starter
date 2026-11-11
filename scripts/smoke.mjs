@@ -6,26 +6,33 @@ import { apply } from '../index.js'
 
 const registered = { sections: [], tools: [], effects: 0 }
 
-const fakeCtx = (search) => ({
-  logger: { info() {}, warn() {}, error() {}, debug() {} },
-  systemPrompt: {
-    section(section) {
-      registered.sections.push(section)
-      return () => {}
+const fakeCtx = (search) => {
+  const services = {
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    web: search ? { search } : undefined,
+  }
+  const ctx = {
+    systemPrompt: {
+      section(section) {
+        registered.sections.push(section)
+        return () => {}
+      },
     },
-  },
-  tools: {
-    register(definition) {
-      registered.tools.push(definition)
-      return () => {}
+    tools: {
+      register(definition) {
+        registered.tools.push(definition)
+        return () => {}
+      },
     },
-  },
-  web: search ? { search } : undefined,
-  effect(fn) {
-    registered.effects += 1
-    return fn
-  },
-})
+    effect(fn) {
+      registered.effects += 1
+      return fn
+    },
+    // 真宿主里 web / logger 用 ctx.reflect.get 读（不写进 inject）
+    reflect: { get: (name) => services[name] },
+  }
+  return ctx
+}
 
 const search = async ({ query }) => ({
   sources: [
