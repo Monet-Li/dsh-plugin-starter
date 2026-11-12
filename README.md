@@ -1,4 +1,5 @@
 # dsh-self-taught
+<<<<<<< HEAD
 
 一个 DeepSeek Harness 插件：**主观问题先采样、再给方向、最后记住你的选择**。
 
@@ -139,3 +140,6 @@ git push -u origin main
 ## License
 
 MIT，见 [LICENSE](./LICENSE)。
+=======
+"Have DeepSeek first conduct online research and summarize the findings, then develop a set of plans, evaluate the feasibility of each one through reasoning, and finally execute the feasible plan."
+>>>>>>> 9f9daf879edc5673abdd6a703961bf83f15bf8fd
